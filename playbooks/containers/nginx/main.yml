@@ -1,0 +1,52 @@
+- hosts: localhost
+  connection: local
+  become: false
+
+  vars:
+    container_name: "nginx-server"
+    container_port: "8080"
+    host_html_dir: "/opt/nginx/html"
+
+  tasks:
+    - name: Create HTML directory
+      file:
+        path: "{{ host_html_dir }}"
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Create sample index.html
+      copy:
+        dest: "{{ host_html_dir }}/index.html"
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head><title>Nginx</title></head>
+          <body>
+            <h1>Welcome to Nginx!</h1>
+            <p>This is a sample page served by Nginx container.</p>
+          </body>
+          </html>
+        mode: '0644'
+      become: true
+
+    - name: Run Nginx container
+      command: >
+        docker run -d 
+        --name {{ container_name }}
+        -p {{ container_port }}:80
+        -v {{ host_html_dir }}:/usr/share/nginx/html:ro
+        --restart unless-stopped
+        nginx:latest
+      register: docker_result
+      failed_when: false
+
+    - name: Show container status
+      debug:
+        msg: "Nginx container started. Access: http://localhost:{{ container_port }}"
+      when: docker_result.rc == 0
+
+    - name: Show error if container already exists
+      debug:
+        msg: "Container may already exist. Try: docker rm {{ container_name }}"
+      when: docker_result.rc != 0
