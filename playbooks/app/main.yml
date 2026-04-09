@@ -85,7 +85,7 @@
       register: app_binary
 
     - name: Build Go web app
-      command: /usr/bin/env bash -lc 'cd {{ app_project_dir }} && rm -rf node_modules package-lock.json && npm install --include=optional && npm run build && go mod download && go build -o {{ app_bin_path }} ./src'
+      command: /usr/bin/env bash -lc 'cd {{ app_project_dir }} && rm -rf node_modules package-lock.json && npm install --include=optional && npm run build && go build -o {{ app_bin_path }} ./src'
       when: go_project_result.changed or not app_binary.stat.exists
       notify: Restart go web service
 
