@@ -43,7 +43,7 @@ Goアプリは `playbooks/app/webapp` を単独プロジェクトとして管理
 最新のリリースタグを使用して実行します。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kdinstall/system-base3/master/script/start.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kdinstall/system-base4/master/script/start.sh | bash
 ```
 
 > **注意:** デフォルトでは GitHub の最新リリースタグが自動的に取得・使用されます。  
@@ -61,7 +61,7 @@ curl -fsSL https://raw.githubusercontent.com/kdinstall/system-base3/master/scrip
 最新の master ブランチを使用してテスト実行する場合は、テスト用スクリプトを使用します。
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kdinstall/system-base3/master/test/start.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kdinstall/system-base4/master/test/start.sh | bash
 ```
 
 ## 導入後の確認

@@ -27,7 +27,7 @@ readonly NC='\033[0m'
 
 # Repository coordinates (change here when using another repository)
 readonly REPO_USER="kdinstall"
-readonly REPO_NAME="system-base3"
+readonly REPO_NAME="system-base4"
 
 log_info() {
     echo -e "${GREEN}→${NC} $1"
