@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 // Env はアプリケーション設定を保持する構造体
 type Env struct {
@@ -18,7 +21,10 @@ func GetEnv() Env {
 
 	playbooksDir := os.Getenv("PLAYBOOKS_DIR")
 	if playbooksDir == "" {
-		playbooksDir = "../../containers"
+		// デフォルト: ../../containers (playbooks/containers)
+		// WorkingDirectoryから絶対パスに変換
+		wd, _ := os.Getwd()
+		playbooksDir = filepath.Join(wd, "..", "..", "containers")
 	}
 
 	return Env{

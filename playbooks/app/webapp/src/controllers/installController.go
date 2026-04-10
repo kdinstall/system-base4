@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"webapp/src/config"
@@ -17,7 +18,10 @@ type InstallController struct{}
 // Index はインストール画面を表示する (GET /install)
 func (ic *InstallController) Index(c *gin.Context) {
 	basePath := config.GetEnv().PlaybooksDir
+	log.Printf("[InstallController] Playbooks directory: %s", basePath)
+
 	playbooks, err := playbook.ListLocalPlaybooks(basePath)
+	log.Printf("[InstallController] Found %d playbooks", len(playbooks))
 
 	var errorMsg string
 	if err != nil {
