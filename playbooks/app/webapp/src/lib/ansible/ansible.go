@@ -31,6 +31,7 @@ func RunPlaybook(playbookPath string, extraVars []string) *PlaybookResult {
 	// Ansible一時ディレクトリを/tmpに設定（ホームディレクトリが存在しないユーザー対応）
 	env := os.Environ()
 	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
+	env = append(env, "ANSIBLE_REMOTE_TEMP=/tmp/ansible")
 	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
@@ -67,6 +68,7 @@ func RunPlaybookWithConnection(playbookPath string, connection string, extraVars
 	// Ansible一時ディレクトリを/tmpに設定（ホームディレクトリが存在しないユーザー対応）
 	env := os.Environ()
 	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
+	env = append(env, "ANSIBLE_REMOTE_TEMP=/tmp/ansible")
 	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
