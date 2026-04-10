@@ -3,6 +3,7 @@ package ansible
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -26,6 +27,11 @@ func RunPlaybook(playbookPath string, extraVars []string) *PlaybookResult {
 	}
 
 	cmd := exec.Command("ansible-playbook", args...)
+
+	// Ansible一時ディレクトリを/tmpに設定（ホームディレクトリが存在しないユーザー対応）
+	env := os.Environ()
+	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
+	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -57,6 +63,11 @@ func RunPlaybookWithConnection(playbookPath string, connection string, extraVars
 	}
 
 	cmd := exec.Command("ansible-playbook", args...)
+
+	// Ansible一時ディレクトリを/tmpに設定（ホームディレクトリが存在しないユーザー対応）
+	env := os.Environ()
+	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
+	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
