@@ -11,6 +11,7 @@
     app_bin_dir: /opt/kdinstall/bin
     app_bin_path: /opt/kdinstall/bin/webapp
     app_port: "8080"
+    playbooks_dir: /opt/kdinstall/containers
 
   tasks:
     - name: Install packages for Go web app
@@ -68,6 +69,7 @@
         - "{{ app_root }}"
         - "{{ app_project_dir }}"
         - "{{ app_bin_dir }}"
+        - "{{ playbooks_dir }}"
 
     - name: Deploy standalone webapp project
       copy:
@@ -78,6 +80,15 @@
         mode: "0644"
         directory_mode: "0755"
       register: go_project_result
+
+    - name: Deploy container playbooks
+      copy:
+        src: "../containers/"
+        dest: "{{ playbooks_dir }}/"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0644"
+        directory_mode: "0755"
 
     - name: Check app binary
       stat:
@@ -113,6 +124,7 @@
           WorkingDirectory={{ app_project_dir }}
           ExecStart={{ app_bin_path }}
           Environment=SERVER_PORT={{ app_port }}
+          Environment=PLAYBOOKS_DIR={{ playbooks_dir }}
           Restart=on-failure
           RestartSec=3
 

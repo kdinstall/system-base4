@@ -21,10 +21,10 @@ func GetEnv() Env {
 
 	playbooksDir := os.Getenv("PLAYBOOKS_DIR")
 	if playbooksDir == "" {
-		// デフォルト: ../../containers (playbooks/containers)
-		// WorkingDirectoryから絶対パスに変換
+		// デフォルト: /opt/kdinstall/containers
+		// WorkingDirectory=/opt/kdinstall/webapp から相対パスで取得
 		wd, _ := os.Getwd()
-		playbooksDir = filepath.Join(wd, "..", "..", "containers")
+		playbooksDir = filepath.Join(wd, "..", "containers")
 	}
 
 	return Env{
