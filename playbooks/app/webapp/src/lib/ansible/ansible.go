@@ -32,6 +32,7 @@ func RunPlaybook(playbookPath string, extraVars []string) *PlaybookResult {
 	env := os.Environ()
 	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
 	env = append(env, "ANSIBLE_REMOTE_TEMP=/tmp/ansible")
+	env = append(env, "ANSIBLE_NOCOLOR=True")
 	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer
@@ -69,6 +70,7 @@ func RunPlaybookWithConnection(playbookPath string, connection string, extraVars
 	env := os.Environ()
 	env = append(env, "ANSIBLE_LOCAL_TEMP=/tmp/ansible")
 	env = append(env, "ANSIBLE_REMOTE_TEMP=/tmp/ansible")
+	env = append(env, "ANSIBLE_NOCOLOR=True")
 	cmd.Env = env
 
 	var stdout, stderr bytes.Buffer

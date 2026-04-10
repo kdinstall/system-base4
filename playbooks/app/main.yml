@@ -58,6 +58,15 @@
         shell: /usr/sbin/nologin
         system: true
 
+    - name: Allow app user to use sudo without password
+      copy:
+        dest: /etc/sudoers.d/{{ app_user }}
+        content: "{{ app_user }} ALL=(ALL) NOPASSWD: ALL\n"
+        mode: "0440"
+        owner: root
+        group: root
+        validate: /usr/sbin/visudo -cf %s
+
     - name: Create app directories
       file:
         path: "{{ item }}"
