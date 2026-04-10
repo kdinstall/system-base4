@@ -28,11 +28,6 @@ func GetEnv() Env {
 		playbooksDir = filepath.Join(wd, "..", "containers")
 	}
 
-	// テストコード
-	wd, _ := os.Getwd()
-	playbooksDir2 := filepath.Join(wd, "..", "containers")
-	log.Println(playbooksDir2)
-
 	// playbooksDir が空でないかチェック
 	if playbooksDir == "" {
 		log.Println("エラー: PLAYBOOKS_DIR が設定されていません")
