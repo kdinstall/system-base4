@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -25,6 +26,27 @@ func GetEnv() Env {
 		// WorkingDirectory=/opt/kdinstall/webapp から相対パスで取得
 		wd, _ := os.Getwd()
 		playbooksDir = filepath.Join(wd, "..", "containers")
+	}
+
+	// テストコード
+	wd, _ := os.Getwd()
+	playbooksDir2 := filepath.Join(wd, "..", "containers")
+	log.Println(playbooksDir2)
+
+	// playbooksDir が空でないかチェック
+	if playbooksDir == "" {
+		log.Println("エラー: PLAYBOOKS_DIR が設定されていません")
+	} else {
+		// ディレクトリの存在確認
+		if info, err := os.Stat(playbooksDir); err != nil {
+			if os.IsNotExist(err) {
+				log.Printf("エラー: playbooksディレクトリが存在しません: %s\n", playbooksDir)
+			} else {
+				log.Printf("エラー: playbooksディレクトリの確認に失敗しました: %s (%v)\n", playbooksDir, err)
+			}
+		} else if !info.IsDir() {
+			log.Printf("エラー: playbooksパスがディレクトリではありません: %s\n", playbooksDir)
+		}
 	}
 
 	return Env{
