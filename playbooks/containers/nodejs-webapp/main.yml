@@ -1,0 +1,59 @@
+- hosts: localhost
+  connection: local
+  become: false
+
+  vars:
+    # デフォルト値（variables.ymlから上書き可能）
+    container_name: "node-webapp"
+    container_port: "3000"
+    docker_network: "app-network"
+    docker_image: "node:20-alpine"
+    db_host: "mysql-server"
+    db_port: "3306"
+    db_name: "myapp"
+    db_user: "dbuser"
+    db_password: ""
+    app_env: "production"
+    secret_key: ""
+
+  tasks:
+    - name: Create Docker network (if not exists)
+      command: docker network create {{ docker_network }}
+      register: network_result
+      failed_when: false
+      changed_when: network_result.rc == 0
+
+    - name: Run Node.js webapp container
+      command: >
+        docker run -d
+        --name {{ container_name }}
+        --network {{ docker_network }}
+        -p {{ container_port }}:3000
+        -e NODE_ENV={{ app_env }}
+        -e DB_HOST={{ db_host }}
+        -e DB_PORT={{ db_port }}
+        -e DB_NAME={{ db_name }}
+        -e DB_USER={{ db_user }}
+        -e DB_PASSWORD={{ db_password }}
+        -e SECRET_KEY={{ secret_key }}
+        --restart unless-stopped
+        {{ docker_image }}
+        sh -c "while true; do echo 'Node.js app running on port 3000'; sleep 30; done"
+      register: docker_result
+      failed_when: false
+      no_log: "{{ db_password != '' or secret_key != '' }}"
+
+    - name: Show container status
+      debug:
+        msg: |
+          Node.js webapp container started.
+          Container name: {{ container_name }}
+          Access: http://localhost:{{ container_port }}
+          Network: {{ docker_network }}
+          Environment: {{ app_env }}
+      when: docker_result.rc == 0
+
+    - name: Show error if container already exists
+      debug:
+        msg: "Container may already exist or failed to start. Try: docker rm {{ container_name }}"
+      when: docker_result.rc != 0

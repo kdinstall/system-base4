@@ -1,0 +1,77 @@
+variables:
+  - name: container_name
+    label: コンテナ名
+    type: text
+    default: node-webapp
+    required: true
+    help: Dockerコンテナの名前を指定してください
+
+  - name: container_port
+    label: ポート番号
+    type: number
+    default: 3000
+    required: true
+    help: ホスト側のポート番号（アプリケーションがリッスンするポート）
+
+  - name: docker_network
+    label: Dockerネットワーク
+    type: text
+    default: app-network
+    required: true
+    help: コンテナ間通信用のDockerネットワーク名
+
+  - name: docker_image
+    label: Dockerイメージ
+    type: text
+    default: node:20-alpine
+    required: true
+    help: 使用するDockerイメージ（例：node:20-alpine, node:18）
+
+  - name: db_host
+    label: データベースホスト
+    type: text
+    default: mysql-server
+    required: false
+    help: データベースコンテナ名またはホスト名（docker network内で名前解決）
+
+  - name: db_port
+    label: データベースポート
+    type: number
+    default: 3306
+    required: false
+    help: データベースのポート番号
+
+  - name: db_name
+    label: データベース名
+    type: text
+    default: myapp
+    required: false
+    help: 接続するデータベース名
+
+  - name: db_user
+    label: データベースユーザー
+    type: text
+    default: dbuser
+    required: false
+    help: データベース接続用のユーザー名
+
+  - name: db_password
+    label: データベースパスワード
+    type: password
+    default: ""
+    required: false
+    help: データベース接続用のパスワード（機密情報）
+
+  - name: app_env
+    label: アプリケーション環境
+    type: text
+    default: production
+    required: true
+    help: アプリケーションの実行環境（production, development, staging等）
+
+  - name: secret_key
+    label: シークレットキー
+    type: password
+    default: ""
+    required: false
+    help: アプリケーション用のシークレットキー（セッション暗号化等に使用）
