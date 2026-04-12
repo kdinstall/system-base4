@@ -69,7 +69,7 @@
       failed_when: false
 
     - name: Check Nginx network connection
-      shell: docker inspect {{ nginx_container }} | grep -q '"{{ docker_network }}"'
+      shell: docker inspect {{ nginx_container }} -f '{{{{range $net, $v := .NetworkSettings.Networks}}}}{{{{$net}}}} {{{{end}}}}'
       register: nginx_network_check
       failed_when: false
       when: nginx_check.rc == 0
@@ -77,19 +77,22 @@
     - name: Connect Nginx to app network
       command: docker network connect {{ docker_network }} {{ nginx_container }}
       register: network_connect
-      failed_when: false
-      when: nginx_check.rc == 0 and nginx_network_check.rc != 0
+      failed_when: network_connect.rc != 0 and 'already exists' not in network_connect.stderr
+      when: nginx_check.rc == 0 and docker_network not in nginx_network_check.stdout
 
     - name: Create Nginx proxy config file
       copy:
         dest: "{{ host_conf_dir }}/{{ container_name }}.conf"
         content: |
+          resolver 127.0.0.11 valid=10s;
+          
           server {
               listen 80;
               server_name {{ app_domain }};
               
               location / {
-                  proxy_pass http://{{ container_name }}:3000;
+                  set $upstream {{ container_name }}:3000;
+                  proxy_pass http://$upstream;
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
