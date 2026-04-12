@@ -4,7 +4,7 @@
 
   vars:
     container_name: "nginx-server"
-    container_port: "8080"
+    container_port: "8081"
     host_html_dir: "/opt/nginx/html"
     host_conf_dir: "/opt/nginx/conf.d"
     docker_network: "app-network"

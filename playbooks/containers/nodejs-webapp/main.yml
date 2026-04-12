@@ -115,7 +115,7 @@
           ✓ Node.js webapp container is running.
           Container name: {{ container_name }}
           Direct access: http://localhost:{{ container_port }}
-          Proxy domain: http://{{ app_domain }}:8080 (via Nginx)
+          Proxy domain: http://{{ app_domain }}:8081 (via Nginx)
           Network: {{ docker_network }}
           Environment: {{ app_env }}
           Status: {% if container_check.rc == 0 %}Existing container started{% else %}New container created{% endif %}
