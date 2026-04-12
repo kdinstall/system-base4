@@ -26,6 +26,11 @@
       failed_when: false
       changed_when: network_result.rc == 0
 
+    - name: Check if Node.js container already exists
+      command: docker ps -a --filter name=^{{ container_name }}$ --format "{{{{.Names}}}}"
+      register: container_check
+      failed_when: false
+
     - name: Run Node.js webapp container
       command: >
         docker run -d
@@ -45,24 +50,30 @@
       register: docker_result
       failed_when: false
       no_log: "{{ db_password != '' or secret_key != '' }}"
+      when: container_check.stdout == ""
+
+    - name: Start existing container if stopped
+      command: docker start {{ container_name }}
+      register: start_result
+      failed_when: false
+      when: container_check.stdout != ""
 
     - name: Wait for Node.js app to start
       command: docker exec {{ container_name }} sh -c "sleep 2 && echo 'Ready'"
       register: wait_result
       failed_when: false
-      when: docker_result.rc == 0
+      when: container_check.stdout == "" and docker_result.rc == 0
 
     - name: Check if Nginx container exists
       command: docker ps --filter name={{ nginx_container }} --format "{{{{.Names}}}}"
       register: nginx_check
       failed_when: false
-      when: docker_result.rc == 0
 
     - name: Connect Nginx to app network
       command: docker network connect {{ docker_network }} {{ nginx_container }}
       register: network_connect
       failed_when: false
-      when: docker_result.rc == 0 and nginx_check.stdout != ""
+      when: nginx_check.stdout != ""
 
     - name: Create Nginx proxy config file
       copy:
@@ -82,31 +93,32 @@
           }
         mode: '0644'
       become: true
-      when: docker_result.rc == 0 and nginx_check.stdout != ""
+      when: nginx_check.stdout != ""
 
     - name: Reload Nginx configuration
       command: docker exec {{ nginx_container }} nginx -s reload
       register: nginx_reload
       failed_when: false
-      when: docker_result.rc == 0 and nginx_check.stdout != ""
+      when: nginx_check.stdout != ""
 
     - name: Show container status
       debug:
         msg: |
-          ✓ Node.js webapp container started successfully.
+          ✓ Node.js webapp container is running.
           Container name: {{ container_name }}
           Direct access: http://localhost:{{ container_port }}
           Proxy domain: http://{{ app_domain }}:8080 (via Nginx)
           Network: {{ docker_network }}
           Environment: {{ app_env }}
+          Status: {% if container_check.stdout != "" %}Existing container started{% else %}New container created{% endif %}
           {% if nginx_check.stdout != "" %}
           ✓ Nginx proxy configured and reloaded.
           {% else %}
           ⚠ Nginx container not found. Install Nginx first for proxy access.
           {% endif %}
-      when: docker_result.rc == 0
+      when: (container_check.stdout != "") or (docker_result.rc == 0)
 
-    - name: Show error if container already exists
+    - name: Show error if container creation failed
       debug:
-        msg: "Container may already exist or failed to start. Try: docker rm {{ container_name }}"
-      when: docker_result.rc != 0
+        msg: "Failed to create container. Check if another service is using port {{ container_port }}"
+      when: container_check.stdout == "" and docker_result.rc != 0
