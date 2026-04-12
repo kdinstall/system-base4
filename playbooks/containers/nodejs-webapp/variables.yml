@@ -49,6 +49,48 @@ variables:
     help: 接続するデータベース名
 
   - name: db_user
+    label: データベースユーザー名
+    type: text
+    default: dbuser
+    required: false
+    help: データベース接続用のユーザー名
+
+  - name: db_password
+    label: データベースパスワード
+    type: password
+    default: ""
+    required: false
+    help: データベース接続用のパスワード
+
+  - name: app_env
+    label: アプリケーション環境
+    type: text
+    default: production
+    required: false
+    help: 実行環境（production, development, testなど）
+
+  - name: secret_key
+    label: シークレットキー
+    type: password
+    default: ""
+    required: false
+    help: アプリケーションで使用するシークレットキー
+
+  - name: app_domain
+    label: アプリケーションドメイン
+    type: text
+    default: app.example.com
+    required: true
+    help: Nginxでプロキシするドメイン名（例：app.example.com）
+
+  - name: nginx_container
+    label: Nginxコンテナ名
+    type: text
+    default: nginx-server
+    required: false
+    help: プロキシ設定を追加するNginxコンテナの名前
+
+  - name: db_user
     label: データベースユーザー
     type: text
     default: dbuser

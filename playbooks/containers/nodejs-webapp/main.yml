@@ -15,6 +15,9 @@
     db_password: ""
     app_env: "production"
     secret_key: ""
+    app_domain: "app.example.com"
+    nginx_container: "nginx-server"
+    host_conf_dir: "/opt/nginx/conf.d"
 
   tasks:
     - name: Create Docker network (if not exists)
@@ -38,19 +41,69 @@
         -e SECRET_KEY={{ secret_key }}
         --restart unless-stopped
         {{ docker_image }}
-        sh -c "while true; do echo 'Node.js app running on port 3000'; sleep 30; done"
+        node -e "require('http').createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end('<h1>Hello from Node.js</h1><p>Container: {{ container_name }}</p><p>Environment: '+process.env.NODE_ENV+'</p>');}).listen(3000,()=>console.log('HTTP Server running on port 3000'));"
       register: docker_result
       failed_when: false
       no_log: "{{ db_password != '' or secret_key != '' }}"
 
+    - name: Wait for Node.js app to start
+      command: docker exec {{ container_name }} sh -c "sleep 2 && echo 'Ready'"
+      register: wait_result
+      failed_when: false
+      when: docker_result.rc == 0
+
+    - name: Check if Nginx container exists
+      command: docker ps --filter name={{ nginx_container }} --format "{{{{.Names}}}}"
+      register: nginx_check
+      failed_when: false
+      when: docker_result.rc == 0
+
+    - name: Connect Nginx to app network
+      command: docker network connect {{ docker_network }} {{ nginx_container }}
+      register: network_connect
+      failed_when: false
+      when: docker_result.rc == 0 and nginx_check.stdout != ""
+
+    - name: Create Nginx proxy config file
+      copy:
+        dest: "{{ host_conf_dir }}/{{ container_name }}.conf"
+        content: |
+          server {
+              listen 80;
+              server_name {{ app_domain }};
+              
+              location / {
+                  proxy_pass http://{{ container_name }}:3000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+        mode: '0644'
+      become: true
+      when: docker_result.rc == 0 and nginx_check.stdout != ""
+
+    - name: Reload Nginx configuration
+      command: docker exec {{ nginx_container }} nginx -s reload
+      register: nginx_reload
+      failed_when: false
+      when: docker_result.rc == 0 and nginx_check.stdout != ""
+
     - name: Show container status
       debug:
         msg: |
-          Node.js webapp container started.
+          ✓ Node.js webapp container started successfully.
           Container name: {{ container_name }}
-          Access: http://localhost:{{ container_port }}
+          Direct access: http://localhost:{{ container_port }}
+          Proxy domain: http://{{ app_domain }}:8080 (via Nginx)
           Network: {{ docker_network }}
           Environment: {{ app_env }}
+          {% if nginx_check.stdout != "" %}
+          ✓ Nginx proxy configured and reloaded.
+          {% else %}
+          ⚠ Nginx container not found. Install Nginx first for proxy access.
+          {% endif %}
       when: docker_result.rc == 0
 
     - name: Show error if container already exists
