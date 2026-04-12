@@ -59,21 +59,26 @@
       when: container_check.rc == 0
 
     - name: Wait for Node.js app to start
-      command: docker exec {{ container_name }} sh -c "sleep 2 && echo 'Ready'"
+      command: docker exec {{ container_name }} sh -c "sleep 3 && echo 'Ready'"
       register: wait_result
       failed_when: false
-      when: container_check.rc != 0 and docker_result.rc == 0
 
     - name: Check if Nginx container exists
       command: docker inspect {{ nginx_container }}
       register: nginx_check
       failed_when: false
 
+    - name: Check Nginx network connection
+      shell: docker inspect {{ nginx_container }} | grep -q '"{{ docker_network }}"'
+      register: nginx_network_check
+      failed_when: false
+      when: nginx_check.rc == 0
+
     - name: Connect Nginx to app network
       command: docker network connect {{ docker_network }} {{ nginx_container }}
       register: network_connect
       failed_when: false
-      when: nginx_check.rc == 0
+      when: nginx_check.rc == 0 and nginx_network_check.rc != 0
 
     - name: Create Nginx proxy config file
       copy:
