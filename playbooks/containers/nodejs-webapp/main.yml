@@ -68,17 +68,17 @@
       register: nginx_check
       failed_when: false
 
-    - name: Check Nginx network connection
-      shell: docker inspect {{ nginx_container }} -f '{{{{range $net, $v := .NetworkSettings.Networks}}}}{{{{$net}}}} {{{{end}}}}'
-      register: nginx_network_check
+    - name: Check if Nginx is in app network
+      command: docker network inspect {{ docker_network }} -f {% raw %}'{{ range .Containers }}{{ .Name }} {{ end }}'{% endraw %}
+      register: network_containers
       failed_when: false
       when: nginx_check.rc == 0
 
     - name: Connect Nginx to app network
       command: docker network connect {{ docker_network }} {{ nginx_container }}
       register: network_connect
-      failed_when: network_connect.rc != 0 and 'already exists' not in network_connect.stderr
-      when: nginx_check.rc == 0 and docker_network not in nginx_network_check.stdout
+      failed_when: false
+      when: nginx_check.rc == 0 and (network_containers.stdout is not defined or nginx_container not in network_containers.stdout)
 
     - name: Create Nginx proxy config file
       copy:
