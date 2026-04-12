@@ -53,5 +53,6 @@ func registerInstallRouter(router *gin.Engine) {
 
 	// インストール管理
 	router.GET("/install", ic.Index)
+	router.GET("/install/:name/config", ic.Config)
 	router.POST("/install/execute", ic.Execute)
 }

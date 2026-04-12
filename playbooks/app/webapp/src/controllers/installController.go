@@ -34,6 +34,40 @@ func (ic *InstallController) Index(c *gin.Context) {
 	}))
 }
 
+// Config は環境変数設定画面を表示する (GET /install/:name/config)
+func (ic *InstallController) Config(c *gin.Context) {
+	playbookName := c.Param("name")
+	basePath := config.GetEnv().PlaybooksDir
+
+	// Playbookの存在確認
+	if err := playbook.ValidatePlaybookExists(basePath, playbookName); err != nil {
+		c.HTML(http.StatusNotFound, "404.html", tmpl.MergeData(gin.H{"page_title": "Not Found"}))
+		return
+	}
+
+	// variables.ymlを読み込む
+	playbookDir := basePath + "/" + playbookName
+	variables, err := playbook.ReadVariables(playbookDir)
+	if err != nil {
+		playbooks, _ := playbook.ListLocalPlaybooks(basePath)
+		c.HTML(http.StatusInternalServerError, "install.html", tmpl.MergeData(gin.H{
+			"page_title":  "コンテナインストール",
+			"active_page": "install",
+			"playbooks":   playbooks,
+			"error":       "環境変数定義の読み込みに失敗しました: " + err.Error(),
+		}))
+		return
+	}
+
+	// 環境変数設定画面を表示
+	c.HTML(http.StatusOK, "install_config.html", tmpl.MergeData(gin.H{
+		"page_title":    "環境変数設定",
+		"active_page":   "install",
+		"playbook_name": playbookName,
+		"variables":     variables,
+	}))
+}
+
 // Execute はPlaybookを実行してコンテナをインストールする (POST /install/execute)
 func (ic *InstallController) Execute(c *gin.Context) {
 	playbookName := c.PostForm("playbook")
@@ -85,9 +119,23 @@ func (ic *InstallController) Execute(c *gin.Context) {
 		return
 	}
 
+	// 環境変数を受け取る（env_で始まるフィールド）
+	var extraVars []string
+	for key, values := range c.Request.PostForm {
+		if strings.HasPrefix(key, "env_") && len(values) > 0 {
+			// env_をプレフィックスから削除
+			varName := strings.TrimPrefix(key, "env_")
+			varValue := values[0]
+			// 空文字列でない場合のみ追加
+			if varValue != "" {
+				extraVars = append(extraVars, varName+"="+varValue)
+			}
+		}
+	}
+
 	// Playbook実行
 	playbookPath := playbook.GetPlaybookPath(basePath, playbookName)
-	result := ansible.RunPlaybookWithConnection(playbookPath, "local", nil)
+	result := ansible.RunPlaybookWithConnection(playbookPath, "local", extraVars)
 
 	// 結果を表示
 	c.HTML(http.StatusOK, "install.html", tmpl.MergeData(gin.H{

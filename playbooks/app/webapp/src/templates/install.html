@@ -106,9 +106,25 @@
             <div class="flex items-center gap-x-2 mb-1">
               <span class="material-symbols-outlined text-blue-500" style="font-size:20px">deployed_code</span>
               <h3 class="text-sm font-semibold text-gray-800">{{ .Name }}</h3>
+              {{- if .Variables }}
+              <span class="inline-flex items-center gap-x-1 py-0.5 px-2 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span class="material-symbols-outlined" style="font-size:12px">tune</span>
+                設定可能
+              </span>
+              {{- end }}
             </div>
             <p class="text-xs text-gray-500">{{ .Description }}</p>
           </div>
+          
+          {{- if .Variables }}
+          <!-- 環境変数設定がある場合：設定画面へ遷移 -->
+          <a href="/install/{{ .Name }}/config"
+             class="ml-4 py-2 px-3 inline-flex items-center gap-x-1.5 text-sm font-semibold rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:outline-hidden focus:bg-blue-700 transition-colors">
+            <span class="material-symbols-outlined" style="font-size:16px">settings</span>
+            設定してインストール
+          </a>
+          {{- else }}
+          <!-- 環境変数設定がない場合：直接インストール -->
           <form method="POST" action="/install/execute" class="ml-4">
             <input type="hidden" name="playbook" value="{{ .Name }}" />
             <button type="submit"
@@ -117,6 +133,7 @@
               インストール
             </button>
           </form>
+          {{- end }}
         </div>
       </div>
       {{- end }}

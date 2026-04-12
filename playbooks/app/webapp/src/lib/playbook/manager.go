@@ -8,7 +8,24 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/goccy/go-yaml"
 )
+
+// Variable はPlaybookの環境変数定義を保持する
+type Variable struct {
+	Name     string `yaml:"name"`
+	Label    string `yaml:"label"`
+	Type     string `yaml:"type"`
+	Default  string `yaml:"default"`
+	Required bool   `yaml:"required"`
+	Help     string `yaml:"help"`
+}
+
+// VariablesConfig はvariables.ymlの構造を表す
+type VariablesConfig struct {
+	Variables []Variable `yaml:"variables"`
+}
 
 // PlaybookInfo はPlaybookの情報を保持する
 type PlaybookInfo struct {
@@ -16,6 +33,7 @@ type PlaybookInfo struct {
 	Path        string
 	Description string
 	IsLocal     bool
+	Variables   []Variable // 環境変数定義（variables.ymlから読み込み）
 }
 
 // ListLocalPlaybooks はローカルのPlaybook一覧を取得する
@@ -40,12 +58,15 @@ func ListLocalPlaybooks(basePath string) ([]PlaybookInfo, error) {
 
 		playbookPath := filepath.Join(basePath, entry.Name(), "main.yml")
 		if _, err := os.Stat(playbookPath); err == nil {
-			description := readDescription(filepath.Join(basePath, entry.Name()))
+			playbookDir := filepath.Join(basePath, entry.Name())
+			description := readDescription(playbookDir)
+			variables, _ := ReadVariables(playbookDir) // エラーは無視（variables.ymlは任意）
 			playbooks = append(playbooks, PlaybookInfo{
 				Name:        entry.Name(),
 				Path:        playbookPath,
 				Description: description,
 				IsLocal:     true,
+				Variables:   variables,
 			})
 		}
 	}
@@ -175,4 +196,29 @@ func ValidatePlaybookExists(basePath, name string) error {
 		return fmt.Errorf("playbook not found: %s", name)
 	}
 	return nil
+}
+
+// ReadVariables はvariables.ymlから環境変数定義を読み込む
+// dir: Playbookのディレクトリパス
+func ReadVariables(dir string) ([]Variable, error) {
+	variablesPath := filepath.Join(dir, "variables.yml")
+
+	// variables.ymlが存在しない場合は空のスライスを返す
+	if _, err := os.Stat(variablesPath); os.IsNotExist(err) {
+		return []Variable{}, nil
+	}
+
+	// ファイル読み込み
+	content, err := os.ReadFile(variablesPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read variables.yml: %v", err)
+	}
+
+	// YAMLパース
+	var config VariablesConfig
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse variables.yml: %v", err)
+	}
+
+	return config.Variables, nil
 }
