@@ -74,14 +74,20 @@
       copy:
         dest: "{{ host_conf_dir }}/default.conf"
         content: |
+          upstream webapp {
+              server host.docker.internal:3000;
+          }
+
           server {
               listen 80 default_server;
               server_name _;
-              root /usr/share/nginx/html;
-              index index.html;
               
               location / {
-                  try_files $uri $uri/ =404;
+                  proxy_pass http://webapp;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
               }
           }
         mode: '0644'
@@ -102,6 +108,7 @@
         docker run -d 
         --name {{ container_name }}
         --network {{ docker_network }}
+        --add-host=host.docker.internal:host-gateway
         -p {{ container_port }}:80
         -p 443:443
         -v {{ host_html_dir }}:/usr/share/nginx/html:ro

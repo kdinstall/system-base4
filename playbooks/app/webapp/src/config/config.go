@@ -9,12 +9,18 @@ import (
 // Env はアプリケーション設定を保持する構造体
 type Env struct {
 	AppName      string
+	ServerHost   string
 	ServerPort   string
 	PlaybooksDir string
 }
 
 // GetEnv は設定を返す（環境変数でオーバーライド可能）
 func GetEnv() Env {
+	host := os.Getenv("SERVER_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		port = "8080"
@@ -46,6 +52,7 @@ func GetEnv() Env {
 
 	return Env{
 		AppName:      "Docker管理",
+		ServerHost:   host,
 		ServerPort:   port,
 		PlaybooksDir: playbooksDir,
 	}
