@@ -1,6 +1,6 @@
 - hosts: localhost
   connection: local
-  become: false
+  become: true
 
   vars:
     # デフォルト値（variables.ymlから上書き可能）
@@ -79,9 +79,31 @@
       copy:
         dest: "{{ host_conf_dir }}/{{ container_name }}.conf"
         content: |
+          # HTTP server - redirect to HTTPS
           server {
               listen 80;
               server_name {{ app_domain }};
+              
+              location / {
+                  return 301 https://$host$request_uri;
+              }
+          }
+          
+          # HTTPS server
+          server {
+              listen 443 ssl;
+              server_name {{ app_domain }};
+              
+              # SSL certificate configuration
+              ssl_certificate /etc/nginx/ssl/server.crt;
+              ssl_certificate_key /etc/nginx/ssl/server.key;
+              
+              # SSL security settings
+              ssl_protocols TLSv1.2 TLSv1.3;
+              ssl_ciphers HIGH:!aNULL:!MD5;
+              ssl_prefer_server_ciphers on;
+              ssl_session_cache shared:SSL:10m;
+              ssl_session_timeout 10m;
               
               location / {
                   proxy_pass http://{{ container_name }}:3000;
@@ -89,10 +111,10 @@
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                   proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header X-Forwarded-Ssl on;
               }
           }
         mode: '0644'
-      become: true
       when: nginx_check.rc == 0
 
     - name: Reload Nginx configuration
@@ -107,12 +129,14 @@
           ✓ Node.js webapp container is running.
           Container name: {{ container_name }}
           Direct access: http://localhost:{{ container_port }}
-          Proxy domain: http://{{ app_domain }}:8081 (via Nginx)
+          HTTP Proxy: http://{{ app_domain }}:8081 (via Nginx - will redirect to HTTPS)
+          HTTPS Proxy: https://{{ app_domain }} (via Nginx - port 443)
           Network: {{ docker_network }}
           Environment: {{ app_env }}
           Status: {% if container_check.rc == 0 %}Existing container started{% else %}New container created{% endif %}
           {% if nginx_check.rc == 0 %}
           ✓ Nginx proxy configured and reloaded.
+          Note: Self-signed certificate will show browser warning (safe to accept for development)
           {% else %}
           ⚠ Nginx container not found. Install Nginx first for proxy access.
           {% endif %}

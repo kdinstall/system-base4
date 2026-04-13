@@ -1,6 +1,6 @@
 - hosts: localhost
   connection: local
-  become: false
+  become: true
 
   vars:
     container_name: "postgresql-server"
@@ -16,7 +16,6 @@
         path: "{{ data_dir }}"
         state: directory
         mode: '0755'
-      become: true
 
     - name: Run PostgreSQL container
       command: >

@@ -1,6 +1,6 @@
 - hosts: localhost
   connection: local
-  become: false
+  become: true
 
   vars:
     container_name: "nginx-server"
@@ -21,14 +21,40 @@
         path: "{{ host_html_dir }}"
         state: directory
         mode: '0755'
-      become: true
 
     - name: Create Nginx config directory
       file:
         path: "{{ host_conf_dir }}"
         state: directory
         mode: '0755'
-      become: true
+
+    - name: Create SSL certificate directory
+      file:
+        path: "/opt/nginx/ssl"
+        state: directory
+        mode: '0755'
+
+    - name: Check if SSL certificate exists
+      stat:
+        path: "/opt/nginx/ssl/server.crt"
+      register: ssl_cert_check
+
+    - name: Generate self-signed SSL certificate
+      command: >
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+        -keyout /opt/nginx/ssl/server.key
+        -out /opt/nginx/ssl/server.crt
+        -subj "/C=JP/ST=Tokyo/L=Tokyo/O=Development/CN=app.example.com"
+      when: not ssl_cert_check.stat.exists
+
+    - name: Set SSL certificate file permissions
+      file:
+        path: "{{ item }}"
+        mode: '0644'
+      loop:
+        - "/opt/nginx/ssl/server.crt"
+        - "/opt/nginx/ssl/server.key"
+      when: not ssl_cert_check.stat.exists
 
     - name: Create sample index.html
       copy:
@@ -43,7 +69,6 @@
           </body>
           </html>
         mode: '0644'
-      become: true
 
     - name: Create default Nginx config
       copy:
@@ -60,7 +85,17 @@
               }
           }
         mode: '0644'
-      become: true
+
+    - name: Check if Nginx container already exists
+      command: docker inspect {{ container_name }}
+      register: container_check
+      failed_when: false
+
+    - name: Remove existing Nginx container if exists
+      command: docker rm -f {{ container_name }}
+      when: container_check.rc == 0
+      register: remove_result
+      failed_when: false
 
     - name: Run Nginx container
       command: >
@@ -68,8 +103,10 @@
         --name {{ container_name }}
         --network {{ docker_network }}
         -p {{ container_port }}:80
+        -p 443:443
         -v {{ host_html_dir }}:/usr/share/nginx/html:ro
         -v {{ host_conf_dir }}:/etc/nginx/conf.d
+        -v /opt/nginx/ssl:/etc/nginx/ssl:ro
         --restart unless-stopped
         nginx:latest
       register: docker_result
@@ -80,10 +117,13 @@
         msg: |
           Nginx container started successfully.
           Container name: {{ container_name }}
-          Access: http://localhost:{{ container_port }}
+          HTTP Access: http://localhost:{{ container_port }}
+          HTTPS Access: https://localhost
           Network: {{ docker_network }}
           Config directory: {{ host_conf_dir }}
           HTML directory: {{ host_html_dir }}
+          SSL directory: /opt/nginx/ssl
+          Note: Self-signed certificate will show browser warning (safe to accept for development)
       when: docker_result.rc == 0
 
     - name: Show error if container already exists

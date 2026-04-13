@@ -117,3 +117,24 @@ variables:
     default: ""
     required: false
     help: アプリケーション用のシークレットキー（セッション暗号化等に使用）
+
+  - name: ssl_enabled
+    label: SSL/HTTPS有効化
+    type: boolean
+    default: true
+    required: false
+    help: HTTPS（443ポート）でのアクセスを有効にする（開発環境では自己署名証明書を使用）
+
+  - name: https_port
+    label: HTTPSポート番号
+    type: number
+    default: 443
+    required: false
+    help: HTTPSでリッスンするポート番号（標準は443）
+
+  - name: ssl_redirect
+    label: HTTPからHTTPSへのリダイレクト
+    type: boolean
+    default: true
+    required: false
+    help: HTTPアクセス時に自動的にHTTPSにリダイレクトする
