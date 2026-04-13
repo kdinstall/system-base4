@@ -49,4 +49,4 @@ systemd サービス `kdinstall-webapp` として起動します。
 ## 環境変数
 
 - `SERVER_PORT`: リッスンポート（デフォルト: 8080）
-- `PLAYBOOKS_DIR`: Playbookディレクトリパス（デフォルト: ../../containers）
+- `PLAYBOOKS_DIR`: Playbookディレクトリパス（デフォルト: ../containers、本番環境では `/opt/kdinstall/containers`）

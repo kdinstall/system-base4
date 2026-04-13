@@ -13,7 +13,7 @@ Docker管理Webアプリケーションは、Dockerコンテナの管理とAnsib
 - **ステータス監視**: コンテナの実行状態をリアルタイム表示
 
 ### 2. Playbookインストール
-- **デフォルトPlaybook**: 事前定義されたコンテナ（Nginx, MySQL, Redis, PostgreSQL, MongoDB）
+- **デフォルトPlaybook**: 事前定義されたコンテナ（Nginx, MySQL, Redis, PostgreSQL, MongoDB, Node.js Webapp）
 - **カスタムPlaybook**: GitリポジトリまたはYAMLファイルからPlaybookをダウンロード
 - **環境変数設定**: インストール時にDB接続情報等を動的に設定
 - **インストール履歴**: 実行ログの表示と結果確認

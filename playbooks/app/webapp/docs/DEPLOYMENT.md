@@ -33,12 +33,15 @@ npm install
 #### 3. 環境変数の設定（オプション）
 
 ```bash
-# .env ファイルを作成
+# .env ファイルを作成（開発環境用）
 cat > .env << 'EOF'
 SERVER_PORT=8080
 PLAYBOOKS_DIR=../../../containers
 EOF
 ```
+
+> **注意**: 開発環境では `playbooks/app/webapp` から見た相対パス `../../../containers` を使用します。  
+> 本番環境では `/opt/kdinstall/containers` を使用します（環境変数未設定時は `../containers` が自動設定され、これは `/opt/kdinstall/webapp` から見て `/opt/kdinstall/containers` になります）。
 
 #### 4. ビルドと起動
 
