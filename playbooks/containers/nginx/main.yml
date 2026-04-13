@@ -75,7 +75,7 @@
         dest: "{{ host_conf_dir }}/default.conf"
         content: |
           upstream webapp {
-              server host.docker.internal:3000;
+              server node-webapp:3000;
           }
 
           server {
@@ -108,7 +108,6 @@
         docker run -d 
         --name {{ container_name }}
         --network {{ docker_network }}
-        --add-host=host.docker.internal:host-gateway
         -p {{ container_port }}:80
         -p 443:443
         -v {{ host_html_dir }}:/usr/share/nginx/html:ro

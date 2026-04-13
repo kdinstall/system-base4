@@ -8,9 +8,8 @@ import (
 func main() {
 	// ルータ起動
 	router := initRouter()
-	env := config.GetEnv()
-	addr := env.ServerHost + ":" + env.ServerPort
-	log.Printf("Server starting on http://%s", addr)
+	addr := ":" + config.GetEnv().ServerPort
+	log.Printf("Server starting on http://localhost%s", addr)
 	if err := router.Run(addr); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}

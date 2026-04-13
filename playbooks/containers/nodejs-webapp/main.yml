@@ -36,7 +36,7 @@
         docker run -d
         --name {{ container_name }}
         --network {{ docker_network }}
-        -p {{ container_port }}:3000
+        -p 127.0.0.1:{{ container_port }}:3000
         -e NODE_ENV={{ app_env }}
         -e DB_HOST={{ db_host }}
         -e DB_PORT={{ db_port }}
