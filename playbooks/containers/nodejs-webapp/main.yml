@@ -84,6 +84,10 @@
               listen 80;
               server_name {{ app_domain }};
               
+              # Dockerの内部DNSを使用して動的に名前解決
+              resolver 127.0.0.11 valid=10s ipv6=off;
+              set $backend "{{ container_name }}:3000";
+              
               location / {
                   return 301 https://$host$request_uri;
               }
@@ -105,13 +109,26 @@
               ssl_session_cache shared:SSL:10m;
               ssl_session_timeout 10m;
               
+              # Dockerの内部DNSを使用して動的に名前解決
+              resolver 127.0.0.11 valid=10s ipv6=off;
+              set $backend "{{ container_name }}:3000";
+              
               location / {
-                  proxy_pass http://{{ container_name }}:3000;
+                  proxy_pass http://$backend;
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                   proxy_set_header X-Forwarded-Proto $scheme;
                   proxy_set_header X-Forwarded-Ssl on;
+                  
+                  # バックエンドが利用できない場合のエラーハンドリング
+                  proxy_intercept_errors on;
+                  error_page 502 503 504 = @backend_unavailable;
+              }
+              
+              location @backend_unavailable {
+                  default_type text/html;
+                  return 503 '<html><head><title>Service Unavailable</title></head><body><h1>503 Service Unavailable</h1><p>Backend service "{{ container_name }}" is not running.</p></body></html>';
               }
           }
         mode: '0644'
